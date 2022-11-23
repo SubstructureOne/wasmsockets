@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "wasmsockets"
+version = "0.1.0"
+description = "Async interface to Pyodide WebSockets"
+authors = ["dek <dek@substructure.one>"]
+readme = "README.md"
+license = { file = "LICENSE" }
+classifiers = [
+    "OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Environment :: Web Environment",
+    "Framework :: AsyncIO",
+    "Topic :: Communications",
+    "Topic :: Internet :: WWW/HTTP :: Browsers",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
