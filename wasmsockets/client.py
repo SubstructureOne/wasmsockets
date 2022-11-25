@@ -26,7 +26,7 @@ class WasmSocket:
         js.console.log(f"Sending message: {message}; checking for socket open")
         await self._isopen.wait()
         js.console.log(f"Socket now open; sending")
-        self._socket.send(message.getBuffer())
+        self._socket.send(message)
 
     async def recv(self):
         js.console.log(f"Receiving message; checking for socket open")
