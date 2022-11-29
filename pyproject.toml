@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "wasmsockets"
-version = "0.1.3"
+version = "0.1.4"
 description = "Async interface to Pyodide WebSockets"
 authors = ["dek <dek@substructure.one>"]
 readme = "README.md"
@@ -17,7 +17,9 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-websockets = "^10.4"
+# don't attempt to install websockets library in a WASM environment (no pure
+# python wheel exists, so it would fail)
+websockets = { version="^10.4", markers="sys_platform != 'emscripten'" }
 
 
 [tool.poetry.group.debug.dependencies]
