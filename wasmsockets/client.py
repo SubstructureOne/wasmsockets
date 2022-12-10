@@ -1,5 +1,7 @@
 import sys
 from asyncio import Queue, Event
+from typing import Any, Callable, Optional
+from dataclasses import dataclass
 
 BytesLike = bytes, bytearray, memoryview
 
@@ -23,6 +25,17 @@ async def connect(uri):
     await socket.connect()
     return socket
 
+@dataclass
+class SabProxy:
+    send: Callable[[Any], None]
+    recv: Callable[[], Any]
+
+SAB_PROXY: Optional[SabProxy] = None
+
+def use_sab_proxy(send, recv):
+    global SAB_PROXY
+    SAB_PROXY = SabProxy(send, recv)
+
 
 class WasmSocket:
     def __init__(self, uri):
@@ -32,6 +45,7 @@ class WasmSocket:
         # will be initialized in a native environment.
         self._jssocket = None
         self._pysocket = None
+        self._message_handlers = list()
         if iswasm():
             self._incoming = Queue()
             self._isopen = Event()
@@ -81,6 +95,15 @@ class WasmSocket:
         else:
             await self._pysocket.send(message)
 
+    def send_sync(self, message):
+        if SAB_PROXY is None:
+            raise NotImplementedError("Sync methods only supported when using the SharedArrayBuffer proxy")
+        if isinstance(message, BytesLike):
+            data = pyodide.ffi.to_js(message)
+        else:
+            data = message
+            SAB_PROXY.send(data)
+
     async def recv(self):
         if iswasm():
             js.console.log(f"Receiving message; checking for socket open")
@@ -92,11 +115,24 @@ class WasmSocket:
             result = await self._pysocket.recv()
         return result
 
+    def recv_sync(self):
+        if SAB_PROXY is None:
+            raise NotImplementedError("Sync methods only supported when using the SharedArrayBuffer proxy")
+        return SAB_PROXY.recv()
+
     async def close(self):
         if iswasm():
             self._jssocket.close()
         else:
             await self._pysocket.close()
+
+    def add_handlers(self, message_handler, wait_handler):
+        # When running in a WASM environment, we may want/need to synchronously
+        # wait for a message to be received. This is complicated because if we
+        # block the main thread of execution, we can't receive any messsages,
+        # so we'll never unblock. Therefore we need to pass off the handling of
+        # receiving message to another worker.
+        pass
 
     # JS callback handlers
 
